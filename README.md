@@ -1,1 +1,1 @@
-# minikube
+# k8s stuff

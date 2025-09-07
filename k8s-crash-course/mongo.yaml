@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-deployment
+  labels:
+    app: mongo
+spec:
+  replicas: 1 # number of pods to run
+  selector:
+    matchLabels:
+      # all pods with this label will be part of this deployment
+      app: mongo
+  template: # configures the pod
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:8.0
+        ports:
+        - containerPort: 27017
+        env:
+        # environment variables for the mongo container
+        # user with these credentials will be created automatically on startup
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-user
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-password
+        - name: MONGO_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mongo-config
+              key: mongo-url
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-service
+spec:
+  selector:
+    # service will forward traffic to pods with this label
+    # this is how service finds the right pods
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017 # port on the service
+      targetPort: 27017 # port on the pod/container
+
